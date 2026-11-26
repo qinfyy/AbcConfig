@@ -1,5 +1,5 @@
 using System.CommandLine;
-using Abc.Config.Storage.Vfs;
+using AbcDumper.Bin;
 
 namespace AbcDumper.ResourceExport.Cli.Commands;
 

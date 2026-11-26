@@ -7,9 +7,9 @@ using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using ProtoBuf;
 
-namespace Abc.Config.Core.Serialization;
+namespace AbcDumper.ResourceExport.Cli.Config;
 
-public static class ProtoJson
+internal static class ProtoJson
 {
 	public static JsonSerializerOptions Options { get; } = new()
 	{

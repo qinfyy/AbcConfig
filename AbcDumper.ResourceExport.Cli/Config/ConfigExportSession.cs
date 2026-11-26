@@ -1,25 +1,24 @@
 using System.Text.Json;
-using Abc.Config.Core.Serialization;
-using Abc.Config.Parser;
-using Abc.Config.Storage.Vfs;
+using AbcDumper.Bin;
+using AbcDumper.Bin.Reading;
 using AbcDumper.Contracts.Model;
 using AnimeSDK.Common.IO;
 
 namespace AbcDumper.ResourceExport.Cli.Config;
 
-internal sealed class ConfigExportSession(ConfigPackage package, ConfigParser parser, TextMapContract textMap, ExportDirectory output)
+internal sealed class ConfigExportSession(ConfigPackage package, AbcConfigReader reader, TextMapContract textMap, ExportDirectory output)
 {
 	public const string ReportPath = "contracts/export.json";
 
 	public bool Export(CancellationToken cancellation)
 	{
 		int finished = 0;
-		Dictionary<ConfigDecodeStatus, int> counts = [];
+		Dictionary<string, int> counts = new(StringComparer.Ordinal);
 		List<ExportFile> files = [];
 		List<RecordIssue> issues = [];
 		var groups = package.Records.GroupBy(record => record.TypeId).OrderBy(group => group.Key).ToArray();
 		var names = ConfigOutputNames.Resolve(groups.Where(group => group.Key != textMap.RecordType)
-			.Select(group => (group.Key, parser.Resolve(group.Key))));
+			.Select(group => (group.Key, reader.Resolve(group.Key))));
 		foreach (var group in groups)
 		{
 			if (group.Key != textMap.RecordType)
@@ -34,13 +33,12 @@ internal sealed class ConfigExportSession(ConfigPackage package, ConfigParser pa
 					WriteRecords(group.Key, $"TestMap/TextMap{language}.json", records);
 				else
 					foreach (ConfigRecord record in records)
-						Record(record, new(ConfigDecodeStatus.UnmappedLanguage,
-							Issues: [new("", "languageBucket", records.Key.ToString())]));
+						Record(record, "UnmappedLanguage", [new("", "languageBucket", records.Key.ToString())]);
 			}
 		}
 		cancellation.ThrowIfCancellationRequested();
 		ConfigShardReport shards = package.InspectShards();
-		bool complete = counts.GetValueOrDefault(ConfigDecodeStatus.Decoded) == package.RecordCount &&
+		bool complete = counts.GetValueOrDefault(nameof(ConfigDecodeStatus.Decoded)) == package.RecordCount &&
 			shards.Problems.Length == 0 && files.Count(file => file.Path.StartsWith("TestMap/", StringComparison.Ordinal)) == textMap.Languages.Count;
 		WriteJson(ReportPath, new
 		{
@@ -57,8 +55,8 @@ internal sealed class ConfigExportSession(ConfigPackage package, ConfigParser pa
 			foreach (ConfigRecord record in records.OrderBy(record => record.RecordId))
 			{
 				cancellation.ThrowIfCancellationRequested();
-				ConfigDecodeResult result = parser.Parse(record);
-				Record(record, result);
+				ConfigDecodeResult result = reader.Read(record);
+				Record(record, result.Status.ToString(), result.Issues);
 				if (result.Data is not null)
 					messages.Add(result.Data);
 			}
@@ -70,12 +68,12 @@ internal sealed class ConfigExportSession(ConfigPackage package, ConfigParser pa
 			files.Add(new(path, typeId, messages.Count));
 		}
 
-		void Record(ConfigRecord record, ConfigDecodeResult result)
+		void Record(ConfigRecord record, string status, DecodeIssue[]? recordIssues)
 		{
 			cancellation.ThrowIfCancellationRequested();
-			counts[result.Status] = counts.GetValueOrDefault(result.Status) + 1;
-			if (result.Status != ConfigDecodeStatus.Decoded)
-				issues.Add(new(record.TypeId, record.RecordId, result.Status, result.Issues));
+			counts[status] = counts.GetValueOrDefault(status) + 1;
+			if (status != nameof(ConfigDecodeStatus.Decoded))
+				issues.Add(new(record.TypeId, record.RecordId, status, recordIssues));
 			if (++finished % 10000 == 0 || finished == package.RecordCount)
 				Console.WriteLine($"TextMap: {finished}/{package.RecordCount}");
 		}
@@ -88,5 +86,5 @@ internal sealed class ConfigExportSession(ConfigPackage package, ConfigParser pa
 	});
 
 	private sealed record ExportFile(string Path, uint TypeId, int Records);
-	private sealed record RecordIssue(uint TypeId, uint RecordId, ConfigDecodeStatus Status, DecodeIssue[]? Issues);
+	private sealed record RecordIssue(uint TypeId, uint RecordId, string Status, DecodeIssue[]? Issues);
 }

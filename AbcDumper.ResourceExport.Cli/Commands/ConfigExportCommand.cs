@@ -22,6 +22,6 @@ internal sealed class ConfigExportCommand : ConfigCommand
 		using Stream source = File.OpenRead(Path.Combine(result.GetValue(Contracts)!, ConfigContractLoader.FileName));
 		ExportDirectory output = new(result.GetValue(_output)!, result.GetValue(Game)!, result.GetValue(Contracts)!);
 		output.Write($"contracts/{ConfigContractLoader.FileName}", source.CopyTo);
-		return new ConfigExportSession(package, new(contract, package), textMap, output).Export(cancellation) ? 0 : 2;
+		return new ConfigExportSession(package, new(package, contract.Types, contract.RawCodecs), textMap, output).Export(cancellation) ? 0 : 2;
 	}
 }

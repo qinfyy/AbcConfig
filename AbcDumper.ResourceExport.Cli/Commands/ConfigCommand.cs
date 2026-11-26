@@ -1,5 +1,5 @@
 using System.CommandLine;
-using Abc.Config.Storage.Vfs;
+using AbcDumper.Bin;
 using AbcDumper.Contracts.Model;
 using AbcDumper.Contracts.Model.Loader;
 
@@ -20,10 +20,7 @@ internal abstract class ConfigCommand : Command
 	{
 		string game = result.GetValue(Game)!;
 		ConfigContract contract = ConfigContractLoader.Load(result.GetValue(Contracts)!);
-		string data = Path.Combine(game, "NexusAnima_Data");
-		string update = Path.Combine(data, "PersistentAssets", "Bin", contract.ChangeList);
-		string fallback = Path.Combine(data, "StreamingAssets", "Bin");
-		ConfigPackage package = ConfigPackage.Open(update, fallback, contract.ManifestSeed);
+		ConfigPackage package = ConfigPackage.OpenGame(game, contract.ChangeList, contract.ManifestSeed);
 		contract.ValidateClient(package.AppVersion, package.ChangeList);
 		return (package, contract);
 	}

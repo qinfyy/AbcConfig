@@ -1,23 +1,28 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Reflection;
-using AbcDumper.Proto;
+using Abc.Bin.Serialization.Attributes;
 using ProtoBuf;
 
-namespace Abc.Config.Core.Serialization;
+namespace Abc.Bin.Serialization;
 
-internal static class HnaProtoCompatibility
+internal static class ProtoFields
 {
-	private static readonly ConcurrentDictionary<Type, ProtoField[]> FieldsByType = new();
+	private static readonly ConcurrentDictionary<Type, IReadOnlyDictionary<int, ProtoField>> FieldsByType = new();
 
-	internal static ProtoField[] GetFields(Type type) => FieldsByType.GetOrAdd(type, static type => type.GetProperties()
+	public static IReadOnlyDictionary<int, ProtoField> For(Type type) => FieldsByType.GetOrAdd(type, static type => type.GetProperties()
 		.Select(property => (Property: property, Member: property.GetCustomAttribute<ProtoMemberAttribute>()))
 		.Where(field => field.Member is not null)
-		.Select(field => new ProtoField(field.Member!.Tag, field.Property)).ToArray());
+		.ToDictionary(field => field.Member!.Tag, field => new ProtoField(field.Property)));
 
-	public static void Inspect(object value, HashSet<DecodeIssue> issues) => Inspect(value, issues, "");
+	public static ProtoUnknownField[] FindUnknown(object value, Func<Type, int, bool>? allowEmptyMessage)
+	{
+		HashSet<ProtoUnknownField> issues = [];
+		Inspect(value, issues, allowEmptyMessage, "");
+		return [.. issues];
+	}
 
-	private static void Inspect(object value, HashSet<DecodeIssue> issues, string path)
+	private static void Inspect(object value, HashSet<ProtoUnknownField> issues, Func<Type, int, bool>? allowEmptyMessage, string path)
 	{
 		if (value is IExtensible extensible && extensible.GetExtensionObject(false) is { } extension && extension.GetLength() != 0)
 		{
@@ -27,21 +32,20 @@ internal static class HnaProtoCompatibility
 				ProtoReader.State reader = ProtoReader.State.Create(stream, null, null, extension.GetLength());
 				try
 				{
-					bool emptyBaseSeen = false;
+					HashSet<int>? allowedTags = null;
 					int tag;
 					while ((tag = reader.ReadFieldHeader()) > 0)
 					{
 						WireType wire = reader.WireType;
-						// The dumped TextMap entry omits the empty HNA base message at tag 1.
-						if (!emptyBaseSeen && value is LocalizedTextEntry && tag == 1 && wire == WireType.String)
+						if (wire == WireType.String && allowEmptyMessage?.Invoke(value.GetType(), tag) == true
+							&& (allowedTags ??= []).Add(tag))
 						{
-							emptyBaseSeen = true;
 							if (reader.AppendBytes(default(ReadOnlyMemory<byte>)).IsEmpty)
 								continue;
 						}
 						else
 							reader.SkipField();
-						issues.Add(new($"{path}#{tag}", "unknownField", wire.ToString()));
+						issues.Add(new($"{path}#{tag}", wire));
 					}
 				}
 				finally { reader.Dispose(); }
@@ -49,7 +53,7 @@ internal static class HnaProtoCompatibility
 			finally { extension.EndQuery(stream); }
 		}
 
-		foreach (ProtoField field in GetFields(value.GetType()))
+		foreach (ProtoField field in For(value.GetType()).Values)
 		{
 			if (field.MessageType is null || field.Property.GetValue(value) is not object member)
 				continue;
@@ -59,31 +63,34 @@ internal static class HnaProtoCompatibility
 				case IDictionary map:
 					foreach (object? child in map.Values)
 						if (child is not null)
-							Inspect(child, issues, childPath);
+							Inspect(child, issues, allowEmptyMessage, childPath);
 					break;
 				case IList items:
 					foreach (object? child in items)
 						if (child is not null)
-							Inspect(child, issues, childPath);
+							Inspect(child, issues, allowEmptyMessage, childPath);
 					break;
 				default:
-					Inspect(member, issues, childPath);
+					Inspect(member, issues, allowEmptyMessage, childPath);
 					break;
 			}
 		}
 	}
 }
 
-internal sealed class ProtoField(int tag, PropertyInfo property)
+internal sealed class ProtoField(PropertyInfo property)
 {
-	public int Tag { get; } = tag;
 	public PropertyInfo Property { get; } = property;
 	public bool IsMap { get; } = typeof(IDictionary).IsAssignableFrom(property.PropertyType);
 	public Type? MessageType { get; } = GetMessageType(property.PropertyType);
+	public uint? XorMask { get; } = property.GetCustomAttribute<AbcProtoXorAttribute>()?.Mask;
+	public bool IsRepeatedUInt32 => typeof(IEnumerable<uint>).IsAssignableFrom(Property.PropertyType);
 
 	private static Type? GetMessageType(Type type)
 	{
-		if (type.IsGenericType && typeof(IEnumerable).IsAssignableFrom(type))
+		if (type.IsArray)
+			type = type.GetElementType()!;
+		else if (type.IsGenericType && typeof(IEnumerable).IsAssignableFrom(type))
 			type = type.GenericTypeArguments[^1];
 		return type.IsClass && type.IsDefined(typeof(ProtoContractAttribute), false) ? type : null;
 	}

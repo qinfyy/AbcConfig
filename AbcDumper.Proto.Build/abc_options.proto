@@ -1,0 +1,8 @@
+syntax = "proto2";
+
+package abc;
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.FieldOptions {
+    optional uint32 xor_mask = 51001;
+}

@@ -1,7 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <ProjectReference Include="../Abc.Config/Abc.Config.csproj" />
-    <ProjectReference Include="../Abc.Config.Core/Abc.Config.Core.csproj" />
-    <ProjectReference Include="../AbcDumper.Contracts.Model/AbcDumper.Contracts.Model.csproj" />
-  </ItemGroup>
-</Project>

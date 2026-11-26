@@ -26,4 +26,4 @@ dotnet run --project .\AbcDumper.ResourceExport.Cli -c Release --no-build -- con
 
 正文由 protobuf-net 反序列化后的对象直接交给 `System.Text.Json`，不添加资源 ID、原始记录字节或诊断。缺少 schema、无法反序列化和非 protobuf 的记录不会写入正文；成功读出的已知字段可导出，但未知字段会标为部分解码。退出码 `0` 表示全部完整，`2` 表示有跳过或未完整记录，`1` 表示操作失败。
 
-项目职责、格式和已验证范围见 [Config 格式](docs/config-0.75.2.md)。
+SDK 调用、项目职责和资源格式见 [Config 格式](docs/config-0.75.2.md)。运行 `dotnet test .\AnimeSDK.slnx -c Release` 验证读取和 XOR 行为。

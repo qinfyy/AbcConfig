@@ -3,7 +3,8 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../Abc.Config.Parser/Abc.Config.Parser.csproj" />
+    <ProjectReference Include="../AbcDumper.Bin/AbcDumper.Bin.csproj" />
+    <ProjectReference Include="../AbcDumper.Contracts.Model/AbcDumper.Contracts.Model.csproj" />
     <PackageReference Include="System.CommandLine" Version="2.0.2" />
   </ItemGroup>
 </Project>

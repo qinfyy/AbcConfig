@@ -6,13 +6,28 @@
 | --- | --- |
 | `tools/analysis` | 复用 CyreneDumper 的 `native_probe.py`，从 PE 注册代码和 SDK Dump 生成合同包。 |
 | `AbcDumper.Contracts.Model` | 读入并校验版本、构建、清单种子、类型 ID 及已证实的二进制布局。 |
-| `Abc.Config/Storage` | 解密清单，验证索引，按区间读取分片。 |
-| `AbcDumper.Proto` | 从 `dump.proto` 和 `NameTranslation.txt` 生成 protobuf-net 模型。 |
-| `Abc.Config.Core` | 反射查找模型，处理 HNA wire 差异，调用 protobuf-net 和 System.Text.Json。 |
-| `Abc.Config.Parser` | 将合同的资源类型 ID 和实际记录绑定到 protobuf 模型。 |
+| `AbcDumper.Bin` | SDK 入口：解密并校验 Config 清单、索引记录区间、打开安装目录或独立资源包、按分片读取原始正文、绑定类型 ID 并解码。 |
+| `Abc.Bin.Serialization` | protobuf-net 扩展：按 CLR 特征处理 ABC wire 差异和未知字段，不依赖具体的游戏模型或合同。 |
+| `AbcDumper.Proto` | 编译期运行扩展的 protogen，从 `dump.proto` 和 `NameTranslation.txt` 生成 CLR 模型。 |
 | `AbcDumper.ResourceExport.Cli` | 按类型或语言分组，并写出正文、合同和诊断。 |
 
-`AbcDumper.Proto` 在编译期把 `NameTranslation.txt` 应用到 protobuf-net.BuildTools 的合约输入；原始 `dump.proto` 不改动。反序列化遵循原 wire tag，C# 属性和导出的 protobuf 字段名称使用 NT 语义名。64 位整数和 map 键写作十进制字符串。合同含本构建的清单种子，属于本地分析产物。
+`AbcDumper.Proto.Build` 将 NT 名称和 XOR 标记作为字段选项传给 protogen。生成的 XOR 字段携带 `[AbcProtoXor(Mask = 0x...)]`，运行时直接读 CLR 特征，不扫描原始 `dump.proto`。反序列化沿用原 wire tag。导出由 CLI 调用 System.Text.Json，64 位整数和 map 键写作十进制字符串。合同含本构建的清单种子，属于本地分析产物。
+
+## SDK 调用
+
+应用可直接引用 `AbcDumper.Bin`，从自己的配置提供构建号、清单种子和类型映射。加载分析合同是 CLI 的职责，不是 SDK 的依赖。
+
+```csharp
+using AbcDumper.Bin;
+using AbcDumper.Bin.Reading;
+using AbcDumper.Proto;
+
+var package = ConfigPackage.OpenGame(gameDirectory, changeList, manifestSeed);
+var reader = new AbcConfigReader(package, schemaNames, nativeLayouts);
+var accessory = reader.ReadExact<AdventureAccessoryConfig>(0x3BCA91ED, 1);
+```
+
+`ConfigPackage.TryFind` 用于查记录位置，`ReadBytes` 用于读取不解码的正文。批处理可用 `AbcConfigReader.Read` 获取解码状态、已读对象和诊断；`ReadExact<T>` 只返回完整解码且模型类型匹配的对象。
 
 ## 存储与记录
 

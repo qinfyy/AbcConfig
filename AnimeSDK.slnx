@@ -1,9 +1,12 @@
 <Solution>
-  <Project Path="Abc.Config.Core/Abc.Config.Core.csproj" />
-  <Project Path="Abc.Config.Parser/Abc.Config.Parser.csproj" />
-  <Project Path="Abc.Config/Abc.Config.csproj" />
+  <Project Path="Abc.Bin.Serialization/Abc.Bin.Serialization.csproj" />
+  <Project Path="AbcDumper.Bin/AbcDumper.Bin.csproj" />
+  <Project Path="AbcDumper.Proto.Build/AbcDumper.Proto.Build.csproj" />
   <Project Path="AbcDumper.Contracts.Model/AbcDumper.Contracts.Model.csproj" />
   <Project Path="AbcDumper.Proto/AbcDumper.Proto.csproj" Id="4168be56-012a-4e31-97d0-716f5a9b1dd2" />
   <Project Path="AbcDumper.ResourceExport.Cli/AbcDumper.ResourceExport.Cli.csproj" />
   <Project Path="AnimeSDK.Common/AnimeSDK.Common.csproj" />
+  <Folder Name="/Tests/">
+    <Project Path="AbcDumper.Bin.Tests/AbcDumper.Bin.Tests.csproj" />
+  </Folder>
 </Solution>

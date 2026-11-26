@@ -1,26 +1,38 @@
-using Abc.Config.Storage.Vfs;
+using Abc.Bin.Serialization;
+using AbcDumper.Bin.Storage;
 using AbcDumper.Proto;
-using ProtoBuf;
 
-namespace Abc.Config.Storage.Manifests;
+namespace AbcDumper.Bin;
 
-internal sealed class ConfigManifest(ConfigDownloadManifest download, ConfigLoadManifest index, (string Name, long Length)[] shards)
+/// <summary>Reads the Config manifests and indexes record locations without opening any shards.</summary>
+public sealed class ConfigIndex
 {
 	private const string DownloadName = "ConfigDownloadManifest.bin";
 	private const string LoadName = "ConfigLoadManifest.bin";
-	private readonly HashSet<ulong> _field6Keys = [.. index.Field6Keys];
+	private static readonly AbcProtoSerializer Serializer = new();
+	private readonly ConfigLoadManifest _index;
+	private readonly HashSet<ulong> _field6Keys;
 
-	public string AppVersion => index.AppVersion;
-	public string ChangeList => download.ChangeList;
-	public int RecordCount => index.RecordIndices.Count;
-	public (string Name, long Length)[] Shards => shards;
-	public IEnumerable<ConfigRecord> Records => index.RecordIndices.Select(pair => GetRecord(pair.Key, pair.Value));
+	public string AppVersion => _index.AppVersion;
+	public string ChangeList { get; }
+	public int RecordCount => _index.RecordIndices.Count;
+	public IReadOnlyList<ConfigShardInfo> Shards { get; }
+	public IEnumerable<ConfigRecord> Records => _index.RecordIndices.Select(pair => GetRecord(pair.Key, pair.Value));
 
-	public static ConfigManifest Open(ManifestCipher cipher, string directory)
+	private ConfigIndex(string changeList, ConfigLoadManifest index, ConfigShardInfo[] shards)
 	{
+		ChangeList = changeList;
+		_index = index;
+		_field6Keys = [.. index.Field6Keys];
+		Shards = Array.AsReadOnly(shards);
+	}
+
+	public static ConfigIndex Open(string directory, ReadOnlySpan<byte> manifestSeed)
+	{
+		using ManifestCipher cipher = new(manifestSeed);
 		string loadPath = Path.Combine(directory, LoadName);
-		var download = Serializer.Deserialize<ConfigDownloadManifest>(cipher.Decrypt(Path.Combine(directory, DownloadName)).AsMemory());
-		var index = Serializer.Deserialize<ConfigLoadManifest>(cipher.Decrypt(loadPath).AsMemory());
+		var download = Serializer.Deserialize<ConfigDownloadManifest>(cipher.Decrypt(Path.Combine(directory, DownloadName)));
+		var index = Serializer.Deserialize<ConfigLoadManifest>(cipher.Decrypt(loadPath));
 		if (download.AppVersion.Length == 0 || download.ChangeList.Length == 0 || download.Files.Count == 0)
 			throw new InvalidDataException("ConfigDownloadManifest is missing version, changelist, or files.");
 		if (download.AppVersion != index.AppVersion)
@@ -33,31 +45,34 @@ internal sealed class ConfigManifest(ConfigDownloadManifest download, ConfigLoad
 		if (!fileSizes.TryGetValue(LoadName, out long indexSize) || new FileInfo(loadPath).Length != indexSize)
 			throw new InvalidDataException("ConfigLoadManifest.bin does not match the download manifest size.");
 
-		var shards = new (string Name, long Length)[index.ShardNames.Count];
+		ConfigShardInfo[] shards = new ConfigShardInfo[index.ShardNames.Count];
 		for (int i = 0; i < shards.Length; i++)
 		{
 			string name = index.ShardNames[i];
 			if (!name.EndsWith(".bin", StringComparison.OrdinalIgnoreCase) || name.AsSpan().IndexOfAny('/', '\\') >= 0
 				|| !fileSizes.TryGetValue(name, out long length))
 				throw new InvalidDataException($"Invalid or unlisted Config shard: {name}.");
-			shards[i] = (name, length);
+			shards[i] = new(name, length);
 		}
 		ValidateRows(index, shards);
-		return new(download, index, shards);
+		return new(download.ChangeList, index, shards);
 	}
 
-	public ConfigRecord Find(uint typeId, uint recordId)
+	public ConfigRecord Find(uint typeId, uint recordId) => TryFind(typeId, recordId, out ConfigRecord record)
+		? record : throw new KeyNotFoundException($"Config record 0x{typeId:X8}:{recordId} was not found.");
+
+	public bool TryFind(uint typeId, uint recordId, out ConfigRecord record)
 	{
 		ulong key = ((ulong)typeId << 32) | recordId;
-		if (!index.RecordIndices.TryGetValue(key, out int row))
-			throw new KeyNotFoundException($"Config record 0x{typeId:X8}:{recordId} was not found.");
-		return GetRecord(key, row);
+		bool found = _index.RecordIndices.TryGetValue(key, out int row);
+		record = found ? GetRecord(key, row) : default;
+		return found;
 	}
 
 	private ConfigRecord GetRecord(ulong key, int row) => new(
-		(uint)(key >> 32), (uint)key, index.ShardIndices[row], index.Offsets[row], index.Lengths[row], _field6Keys.Contains(key));
+		(uint)(key >> 32), (uint)key, _index.ShardIndices[row], _index.Offsets[row], _index.Lengths[row], _field6Keys.Contains(key));
 
-	private static void ValidateRows(ConfigLoadManifest index, (string Name, long Length)[] shards)
+	private static void ValidateRows(ConfigLoadManifest index, ConfigShardInfo[] shards)
 	{
 		int rows = index.ShardIndices.Count;
 		if (shards.Length == 0 || rows == 0 || index.RecordIndices.Count == 0 || index.Offsets.Count != rows || index.Lengths.Count != rows)
@@ -73,3 +88,8 @@ internal sealed class ConfigManifest(ConfigDownloadManifest download, ConfigLoad
 		}
 	}
 }
+
+public readonly record struct ConfigShardInfo(string Name, long Length);
+
+/// <summary>A record location. Offset and Length are bytes relative to its shard.</summary>
+public readonly record struct ConfigRecord(uint TypeId, uint RecordId, int ShardIndex, int Offset, int Length, bool ListedInField6);

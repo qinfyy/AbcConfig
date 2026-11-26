@@ -1,5 +1,5 @@
 using System.CommandLine;
-using Abc.Config.Storage.Vfs;
+using AbcDumper.Bin;
 using AbcDumper.Contracts.Model.Loader;
 using AnimeSDK.Common.IO;
 
