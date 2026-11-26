@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Iced" Version="1.21.0" />
+    <ProjectReference Include="../CyreneDumper.Msil.Resolver/CyreneDumper.Msil.Resolver.csproj" />
+  </ItemGroup>
+</Project>

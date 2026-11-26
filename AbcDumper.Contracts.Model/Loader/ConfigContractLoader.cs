@@ -6,13 +6,14 @@ namespace AbcDumper.Contracts.Model.Loader;
 public static class ConfigContractLoader
 {
 	public const string FileName = "contracts.json";
+	public const string Format = "abc-config-contracts-v1";
 
 	public static ConfigContract Load(string directory)
 	{
 		using Stream input = File.OpenRead(Path.Combine(directory, FileName));
 		using JsonDocument document = JsonDocument.Parse(input);
 		JsonElement root = document.RootElement;
-		if (Get(root, "format", JsonValueKind.String).GetString() != "abc-config-contracts-v1")
+		if (Get(root, "format", JsonValueKind.String).GetString() != Format)
 			throw new InvalidDataException("不支持的 Config 合同格式。");
 		string version = Get(root, "appVersion", JsonValueKind.String).GetString()!;
 		string build = Get(root, "changeList", JsonValueKind.String).GetString()!;

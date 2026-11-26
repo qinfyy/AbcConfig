@@ -6,7 +6,7 @@
   <Project Path="AbcDumper.Proto/AbcDumper.Proto.csproj" Id="4168be56-012a-4e31-97d0-716f5a9b1dd2" />
   <Project Path="AbcDumper.ResourceExport.Cli/AbcDumper.ResourceExport.Cli.csproj" />
   <Project Path="AnimeSDK.Common/AnimeSDK.Common.csproj" />
-  <Folder Name="/Tests/">
-    <Project Path="AbcDumper.Bin.Tests/AbcDumper.Bin.Tests.csproj" />
-  </Folder>
+  <Project Path="CyreneDumper.Analysis.Cli/CyreneDumper.Analysis.Cli.csproj" />
+  <Project Path="CyreneDumper.Analysis.Engine/CyreneDumper.Analysis.Engine.csproj" />
+  <Project Path="CyreneDumper.Msil.Resolver/CyreneDumper.Msil.Resolver.csproj" />
 </Solution>

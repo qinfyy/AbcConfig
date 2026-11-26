@@ -4,7 +4,9 @@
 
 | 模块 | 职责 |
 | --- | --- |
-| `tools/analysis` | 复用 CyreneDumper 的 `native_probe.py`，从 PE 注册代码和 SDK Dump 生成合同包。 |
+| `CyreneDumper.Analysis.Cli` | C# 分析器：从 PE 注册代码和 SDK Dump 生成 Config、RawConfig 和 TextMap 合同。 |
+| `CyreneDumper.Analysis.Engine` | SDK 原生分析框架：PE 映像、指令解码、控制流、符号跟踪及分析会话。 |
+| `CyreneDumper.Msil.Resolver` | SDK 元数据分析框架：读取 DummyDll 和 Inspector 引用索引。 |
 | `AbcDumper.Contracts.Model` | 读入并校验版本、构建、清单种子、类型 ID 及已证实的二进制布局。 |
 | `AbcDumper.Bin` | SDK 入口：解密并校验 Config 清单、索引记录区间、打开安装目录或独立资源包、按分片读取原始正文、绑定类型 ID 并解码。 |
 | `Abc.Bin.Serialization` | protobuf-net 扩展：按 CLR 特征处理 ABC wire 差异和未知字段，不依赖具体的游戏模型或合同。 |
