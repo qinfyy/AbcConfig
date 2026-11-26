@@ -1,10 +1,10 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Reflection;
-using Abc.Bin.Serialization.Attributes;
+using AbcDumper.Bin.Serialization.Attributes;
 using ProtoBuf;
 
-namespace Abc.Bin.Serialization;
+namespace AbcDumper.Bin.Serialization;
 
 internal static class ProtoFields
 {

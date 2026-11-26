@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="Abc.Bin.Serialization/Abc.Bin.Serialization.csproj" />
+  <Project Path="AbcDumper.Bin.Serialization/AbcDumper.Bin.Serialization.csproj" />
   <Project Path="AbcDumper.Bin/AbcDumper.Bin.csproj" />
   <Project Path="AbcDumper.Proto.Build/AbcDumper.Proto.Build.csproj" />
   <Project Path="AbcDumper.Contracts.Model/AbcDumper.Contracts.Model.csproj" />

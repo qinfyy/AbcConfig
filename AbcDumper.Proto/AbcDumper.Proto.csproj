@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Abc.Bin.Serialization/Abc.Bin.Serialization.csproj" />
+    <ProjectReference Include="../AbcDumper.Bin.Serialization/AbcDumper.Bin.Serialization.csproj" />
     <ProjectReference Include="$(ProtoGeneratorDirectory)/AbcDumper.Proto.Build.csproj" ReferenceOutputAssembly="false" OutputItemType="ProtoGenerator" Private="false" PrivateAssets="all" />
     <UpToDateCheckInput Include="dump.proto;NameTranslation.txt;$(ProtoOptions)" />
     <UpToDateCheckInput Include="$(ProtoGeneratorDirectory)/**/*.cs;$(ProtoGeneratorDirectory)/AbcDumper.Proto.Build.csproj" Exclude="$(ProtoGeneratorDirectory)/bin/**;$(ProtoGeneratorDirectory)/obj/**" />

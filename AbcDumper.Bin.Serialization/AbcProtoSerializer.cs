@@ -1,7 +1,7 @@
 using ProtoBuf;
 using ProtoBuf.Meta;
 
-namespace Abc.Bin.Serialization;
+namespace AbcDumper.Bin.Serialization;
 
 /// <summary>Decodes ABC protobuf using the wire metadata on CLR contracts.</summary>
 public sealed class AbcProtoSerializer

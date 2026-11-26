@@ -5,6 +5,6 @@
   <ItemGroup>
     <ProjectReference Include="../AnimeSDK.Common/AnimeSDK.Common.csproj" />
     <ProjectReference Include="../AbcDumper.Proto/AbcDumper.Proto.csproj" />
-    <ProjectReference Include="../Abc.Bin.Serialization/Abc.Bin.Serialization.csproj" />
+    <ProjectReference Include="../AbcDumper.Bin.Serialization/AbcDumper.Bin.Serialization.csproj" />
   </ItemGroup>
 </Project>

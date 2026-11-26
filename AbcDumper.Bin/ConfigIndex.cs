@@ -1,4 +1,4 @@
-using Abc.Bin.Serialization;
+using AbcDumper.Bin.Serialization;
 using AbcDumper.Bin.Storage;
 using AbcDumper.Proto;
 

@@ -21,7 +21,7 @@
 | `AbcDumper.Contracts.Model` | 合同 DTO 及 JSON 加载、结构校验、客户端绑定。保持零项目引用。 |
 | `AbcDumper.Proto.Build` | 编译期应用 NT 和 `abc_options.proto`，调用 protobuf-net 的 protogen 生成 CLR 模型并附加 XOR 特征。 |
 | `AbcDumper.Proto` | 管理 `dump.proto`、`NameTranslation.txt` 和增量生成目标；提供生成的 CLR 模型。 |
-| `Abc.Bin.Serialization` | protobuf-net 扩展：按 CLR 元数据处理已验证的 ABC wire 差异、XOR 和未知字段检查。不依赖游戏模型、PE 或合同。 |
+| `AbcDumper.Bin.Serialization` | protobuf-net 扩展：按 CLR 元数据处理已验证的 ABC wire 差异、XOR 和未知字段检查。不依赖游戏模型、PE 或合同。 |
 | `AbcDumper.Bin` | SDK API：打开包和清单、定位分片、限制正文读取区间、绑定 schema 和解码记录。 |
 | `AbcDumper.ResourceExport.Cli` | 加载合同、调用 SDK、决定分组和文件名、序列化正文、统计诊断并写报告。 |
 | `AnimeSDK.Common` | 通用有界流、二进制资源接口、随机访问、路径保护与原子文件写入。 |
@@ -30,7 +30,7 @@
 Analysis.Cli       -> Analysis.Engine -> Msil.Resolver
                    -> Contracts.Model
 ResourceExport.Cli -> Contracts.Model
-                   -> AbcDumper.Bin -> AbcDumper.Proto -> Abc.Bin.Serialization
+                   -> AbcDumper.Bin -> AbcDumper.Proto -> AbcDumper.Bin.Serialization
 AbcDumper.Proto    -> AbcDumper.Proto.Build（仅编译期）
 ```
 
@@ -45,7 +45,7 @@ AbcDumper.Proto    -> AbcDumper.Proto.Build（仅编译期）
 | 合同 DTO、版本、字段校验 | `AbcDumper.Contracts.Model/`、`Loader/`；对应写出逻辑留在分析 CLI |
 | 清单、索引、分片、正文与 SDK 读法 | `AbcDumper.Bin` 的 `ConfigPackage`、`ConfigIndex`、`Storage/`、`Reading/` |
 | Proto 重命名、编译器选项和生成目标 | `AbcDumper.Proto`、`AbcDumper.Proto.Build` |
-| 经实证的非标准 wire、字段特征与转换 | `Abc.Bin.Serialization` |
+| 经实证的非标准 wire、字段特征与转换 | `AbcDumper.Bin.Serialization` |
 | 导出分组、文件命名、JSON 字段呈现、失败统计 | `AbcDumper.ResourceExport.Cli/Config/` 或新增对应数据域 |
 
 ## 3. 合同、Proto 和输出约定

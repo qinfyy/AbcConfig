@@ -2,7 +2,7 @@ using System.Buffers;
 using System.Collections.Concurrent;
 using ProtoBuf;
 
-namespace Abc.Bin.Serialization;
+namespace AbcDumper.Bin.Serialization;
 
 internal sealed class ProtoXor
 {

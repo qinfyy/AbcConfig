@@ -13,7 +13,7 @@ internal sealed class AbcCodeGenerator : CSharpCodeGenerator
 	protected override void WriteField(GeneratorContext context, FieldDescriptorProto field, ref object state, OneOfStub[] oneOfs)
 	{
 		if (field.Options is IExtensible options && Extensible.TryGetValue(options, XorMaskOption, out uint mask))
-			context.WriteLine($"[global::Abc.Bin.Serialization.Attributes.AbcProtoXor(Mask = 0x{mask:X})]");
+			context.WriteLine($"[global::AbcDumper.Bin.Serialization.Attributes.AbcProtoXor(Mask = 0x{mask:X})]");
 		base.WriteField(context, field, ref state, oneOfs);
 	}
 }
