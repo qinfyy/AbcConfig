@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../AbcDumper.Proto/AbcDumper.Proto.csproj" />
+    <PackageReference Include="protobuf-net" Version="3.2.56" />
+  </ItemGroup>
+</Project>

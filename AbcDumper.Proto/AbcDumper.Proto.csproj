@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TranslatedProto>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(BaseIntermediateOutputPath)', '$(Configuration)', '$(TargetFramework)', 'nt', 'dump.proto'))</TranslatedProto>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="protobuf-net" Version="3.2.56" />
+    <PackageReference Include="protobuf-net.BuildTools" Version="3.2.52" PrivateAssets="all" />
+    <Compile Remove="Build/ApplyNameTranslation.cs" />
+    <None Include="Build/ApplyNameTranslation.cs" />
+    <AdditionalFiles Include="$(TranslatedProto)" Names="original" RepeatedAsList="true" />
+    <EmbeddedResource Include="dump.proto" LogicalName="AbcDumper.Proto.dump.proto" />
+  </ItemGroup>
+
+  <UsingTask TaskName="ApplyNameTranslation" TaskFactory="RoslynCodeTaskFactory"
+             AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
+    <Task>
+      <Code Type="Class" Language="cs" Source="$(MSBuildProjectDirectory)/Build/ApplyNameTranslation.cs" />
+    </Task>
+  </UsingTask>
+  <Target Name="PrepareTranslatedProto" BeforeTargets="CoreCompile"
+          Inputs="dump.proto;NameTranslation.txt;Build/ApplyNameTranslation.cs;$(MSBuildProjectFullPath)"
+          Outputs="$(TranslatedProto)">
+    <ApplyNameTranslation Dump="$(MSBuildProjectDirectory)/dump.proto" Names="$(MSBuildProjectDirectory)/NameTranslation.txt"
+                          Output="$(TranslatedProto)" />
+  </Target>
+
+</Project>
