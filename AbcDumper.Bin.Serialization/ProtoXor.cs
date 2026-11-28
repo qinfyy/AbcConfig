@@ -8,7 +8,7 @@ internal sealed class ProtoXor
 {
 	private readonly ConcurrentDictionary<Type, IReadOnlySet<Type>> _routes = new();
 
-	public ReadOnlyMemory<byte> Decode(Type type, ReadOnlyMemory<byte> bytes)
+	public ReadOnlyMemory<byte> Transform(Type type, ReadOnlyMemory<byte> bytes)
 	{
 		var routes = _routes.GetOrAdd(type, BuildRoutes);
 		return routes.Contains(type) ? Rewrite(bytes, type, routes, false, 0) : bytes;

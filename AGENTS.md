@@ -59,7 +59,7 @@ AbcDumper.Proto    -> AbcDumper.Proto.Build（仅编译期）
 ### Proto 与 NameTranslation
 
 - `dump.proto` 保留原始消息、枚举、嵌套关系和 tag。向上游补漏时保留程序集边界（`// Assembly: ...`）、消息与枚举分类及可复查的原生证据。不要凭导出字段名、消息名或网络消息 ID 推导 Config 的 type ID 或 wire tag。
-- `NameTranslation.txt` 每行是 `混淆标识 语义标识`，可用空行及以 `#`、`;`、`//` 开头的整行注释。同名字段优先用 `混淆类型.混淆字段 语义字段`，嵌套作用域沿原始声明。冲突要先确认归属，不依赖映射顺序。NT 只改变符号命名，不改 tag、wire type、枚举数值、默认值或正文结构。
+- `NameTranslation.txt` 每行是 `混淆标识 语义标识`，可用空行及 `;` 开头的整行或行尾注释。同名字段优先用 `混淆类型.混淆字段 语义字段`，嵌套作用域沿原始声明。冲突要先确认归属，不依赖映射顺序。NT 只改变符号命名，不改 tag、wire type、枚举数值、默认值或正文结构。
 - 生成链为 `dump.proto + NameTranslation.txt + abc_options.proto -> AbcDumper.Proto.Build -> dump.g.cs`。由 MSBuild 写入中间目录并参与编译；不要维护、提交生成的 C#，不要在 SDK 里为两套名称做兜底赋值，也不要在导出 JSON 后再批量替换字段名。检查 CLI 构建与 VS 中的增量生成，`obj` 不应作为项目内容出现。
 - XOR 先证明字段 tag、wire type、掩码及适用场景，再在 dump 中标注 `// XOR: 0x...`。构建期生成 `[AbcProtoXor(Mask = 0x...)]`，运行期按类型与字段元数据处理。目前生成器接受标注的 `uint32`（含 repeated）；扩展到其他类型前，分别验证字段缺席、显式零、嵌套、集合的 packed/unpacked 或映射场景中实际受影响的形式。不能将字段未出现当作零再执行 XOR。
 

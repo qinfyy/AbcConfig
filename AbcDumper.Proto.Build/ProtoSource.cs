@@ -22,8 +22,9 @@ internal static class ProtoSource
 		foreach (string line in File.ReadLines(path))
 		{
 			number++;
-			string value = line.Trim();
-			if (value.Length == 0 || value[0] == ';' || value[0] == '#' || value.StartsWith("//", StringComparison.Ordinal))
+			int comment = line.IndexOf(';');
+			string value = (comment < 0 ? line : line[..comment]).Trim();
+			if (value.Length == 0)
 				continue;
 			string[] pair = value.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
 			if (pair.Length != 2 || !pair[0].Split('.').All(part => Identifier.IsMatch(part)) || !Identifier.IsMatch(pair[1]))
